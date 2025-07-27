@@ -1,0 +1,26 @@
+.deck {
+  /* flex: 1; */
+  position: relative;
+
+  height: 300px;
+  width: 200px;
+
+  background-color: rgba(90, 224, 108, 0.388);
+
+  user-select: none;
+  touch-action: none;
+  -webkit-user-select: none;
+  -webkit-tap-highlight-color: transparent; /* 🧽 убирает синюю подсветку при тапе */
+  -webkit-touch-callout: none; /* ❌ запрещает контекстное меню на iOS */
+
+  z-index: 1;
+}
+
+.card {
+  position: absolute;
+  height: inherit;
+  width: inherit;
+
+  object-fit: contain contain; /* или contain, если важно не обрезать */
+  display: block; /* убирает лишние отступы от inline-img */
+}

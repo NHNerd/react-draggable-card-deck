@@ -1,0 +1,11 @@
+.header {
+  position: absolute;
+
+  width: 80%;
+  top: 20px;
+  left: 50%;
+  transform: translateX(-50%);
+
+  border-radius: 50px;
+  background-color: plum;
+}

@@ -1,0 +1,25 @@
+.gameContainer {
+  position: absolute;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-evenly;
+  align-items: center;
+  inset: 0;
+}
+.flexChildren1,
+.flexChildren2,
+.flexChildren3 {
+  display: flex;
+  justify-content: space-evenly;
+  align-items: center;
+  position: relative;
+  flex: 1;
+  width: 100%;
+
+  /* border: dotted 2px red; */
+  box-sizing: border-box;
+}
+
+.flexChildren1 {
+  display: block;
+}

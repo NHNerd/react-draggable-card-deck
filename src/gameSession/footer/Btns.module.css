@@ -1,0 +1,51 @@
+.footer {
+  /* flex: 1; */
+  position: relative;
+
+  width: 30%;
+  height: 100px;
+
+  /* top: -50%;
+  left: -50%;
+  transform: translate(-50%, -50%); */
+
+  max-width: 400px;
+  min-width: 220px;
+}
+
+.left,
+.right,
+.back,
+.flip {
+  position: absolute;
+  background-color: rgb(239, 211, 255);
+  width: 84px;
+  height: 32px;
+
+  font-size: 18px;
+  font-weight: bolder;
+  color: black;
+
+  text-shadow: 2px 2px 4px rgb(255, 255, 255);
+  border-radius: 8px;
+  border: solid 3px rgb(0, 0, 0);
+  box-sizing: content-box;
+}
+
+.left {
+  left: 0;
+  top: 0;
+}
+.right {
+  right: 0;
+  top: 0;
+}
+
+.back {
+  left: 0;
+  bottom: 0;
+}
+.flip {
+  right: 0;
+  bottom: 0;
+}

@@ -221,7 +221,8 @@ const Draggable = ({
           }
 
           setXy((prev) => {
-            return { x: prev.x + flingSpeed.current.x * 8, y: prev.y + flingSpeed.current.y * 6 };
+            const speed = flingSpeed.current as XYType;
+            return { x: prev.x + speed.x * 8, y: prev.y + speed.y * 6 };
           });
           xyPrev.current = { ...xyRef.current };
           // DEV

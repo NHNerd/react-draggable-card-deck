@@ -145,7 +145,7 @@ function Deck({
             deck={deck}
             setDeck={setDeck}
             deckRef={deckRef}
-            indexTop={i}
+            index={i}
             card={card}
             rotateRand={rotate}
             deckHistory={deckHistory}

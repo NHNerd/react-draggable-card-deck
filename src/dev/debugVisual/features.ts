@@ -8,11 +8,13 @@ export const nameFromImg = (devDeckVisible: CardType[], i: number) => {
 export const devChangeStatus = (
   setDevDragsStatus: React.Dispatch<React.SetStateAction<DragsStatusType[]>>,
   card: CardType,
-  status: 'sleep' | 'drag' | 'fling' | 'backToDeck' | 'comeBack'
+  status: 'sleep' | 'drag' | 'fling' | 'backToDeck' | 'comeBack',
+  devForCount: React.RefObject<number>
 ) => {
   setDevDragsStatus((prev) => {
     const fresh = [...prev];
-    for (let i = 0; i < prev.length; i++) {
+    for (let i = 0; i < devForCount.current; i++) {
+      if (!prev[i]?.id) return fresh;
       if (prev[i].id === card.id) {
         prev[i].status = status;
         break;
@@ -26,12 +28,13 @@ export const devInfoCardOut = (
   setDevDragsStatus: React.Dispatch<React.SetStateAction<DragsStatusType[]>>,
   deck: CardType[],
   card: CardType,
-  dragCount: number
+  devForCount: React.RefObject<number>
 ) => {
   setDevDragsStatus((prev) => {
     const fresh = [];
     let isDel = 1;
-    for (let i = 0; i < prev.length; i++) {
+    for (let i = 0; i < devForCount.current; i++) {
+      if (!prev[i]?.id) return prev;
       if (prev[i]?.id === card.id) {
         isDel = 0;
         continue;
@@ -41,7 +44,7 @@ export const devInfoCardOut = (
       fresh[newIndex] = { ...prev[i], dragNum: newIndex };
     }
     //TODO
-    const newCard = deck[deck.length - 1 - Math.min(dragCount, deck.length - 1)];
+    const newCard = deck[deck.length - 1 - Math.min(devForCount.current, deck.length - 1)];
     // console.log(deck.length - 1 - Math.min(dragCount, deck.length - 1));
     // console.log(newCard);
     fresh[0] = { id: newCard.id, dragNum: 0, card: nameFromImg([newCard], 0), status: 'sleep' };

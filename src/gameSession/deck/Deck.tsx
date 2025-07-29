@@ -23,21 +23,20 @@ function Deck({
   setDevDragsStatus,
 }: DeckProps) {
   const [dragCount, setDragCount] = useState<number>(5);
-  const [deck, setDeck] = useState<CardType[]>(gameDeck());
+  const dragCountRef = useRef<number>(5);
+  const devForCount = useRef<number>(5);
+
+  const [deck, setDeck] = useState<CardType[]>([]);
   const deckRef = useRef<CardType[]>(deck);
   const deckHistory = useRef<CardHistoryType[]>([]);
   const deckHistoryTop = useRef<CardHistoryType | null>(null);
 
   const [deckVisible, setDeckVisible] = useState<CardType[]>([]);
 
-  const [btnsLR, setBtnsLR] = useState<{ l: boolean; r: boolean }[]>([]);
-
-  //TODO change draggedId to set => has (O1)
-  const draggedId = useRef<Set<number>>(new Set());
-  // const draggedId = useRef<number[]>([]);
-  // const randoms = useRef<number[]>(Array.from({ length: deck.length }, () => (Math.random() - 0.5) * 12));
+  const draggedId = useRef<Set<number>>(new Set([]));
 
   useEffect(() => {
+    if (deck.length === 0) return;
     const vis = [...deck].slice(-20);
     setDeckVisible(vis);
     devDeckVisibleSet(vis);
@@ -48,17 +47,21 @@ function Deck({
     devDeckRestSet(deck.length);
   }, [deck, dragCount]);
 
+  // Only first mount
   const hasInitialized = useRef(false);
   useEffect(() => {
     //dev
     if (hasInitialized.current) return;
     hasInitialized.current = true;
 
+    const deckFirst = gameDeck();
+    setDeck(deckFirst);
+
     for (let i = 0; i < dragCount; i++) {
-      const indexTop = deck.length - dragCount + i;
-      const cardName = nameFromImg(deck, indexTop);
+      const indexTop = deckFirst.length - dragCount + i;
+      const cardName = nameFromImg(deckFirst, indexTop);
       setDevDragsStatus((prev) => {
-        return [...prev, { id: deck[indexTop].id, dragNum: prev.length, card: cardName, status: 'sleep' }];
+        return [...prev, { id: deckFirst[indexTop].id, dragNum: prev.length, card: cardName, status: 'sleep' }];
       });
     }
   }, []);
@@ -74,15 +77,37 @@ function Deck({
         return;
       }
 
+      const size1 = 5;
+      const size2 = 15;
+      const draggedIdSize = draggedId.current.size;
+      if (draggedIdSize >= dragCount) {
+        setDragCount(size2);
+        dragCountRef.current = size2;
+        return;
+      } else if (dragCount === size2) {
+        setDragCount(size1);
+        dragCountRef.current = size1;
+      }
+
       deckHistoryTop.current = deckHistory.current.pop() ?? null;
       const comeBackCard = { ...deckHistoryTop.current, comeBack: true };
       setDeck([...deckRef.current, comeBackCard]);
 
+      draggedId.current.add(comeBackCard.id);
+
       // DEV
+      //TODO
+      devForCount.current = Math.max(size1, Math.min(dragCount, draggedIdSize));
+
       setDevDragsStatus((prev) => {
         const fresh = [];
-        for (let i = 0; i < prev.length; i++) {
+        // console.log('🍒', devForCount.current);
+        for (let i = 0; i < devForCount.current; i++) {
           if (i === 0) continue;
+          if (!prev[i]) {
+            fresh[i - 1] = null;
+            continue;
+          }
           fresh[i - 1] = { ...prev[i], dragNum: prev[i].dragNum - 1 };
         }
         const maxI = dragCount - 1;
@@ -95,7 +120,7 @@ function Deck({
         return fresh;
       });
     }
-  }, [btns.back]);
+  }, [btns.back, dragCount]);
 
   useEffect(() => {
     if (!btns.left && !btns.right) return;
@@ -145,14 +170,12 @@ function Deck({
             deck={deck}
             setDeck={setDeck}
             deckRef={deckRef}
-            index={i}
             card={card}
             rotateRand={rotate}
             deckHistory={deckHistory}
             deckHistoryTop={deckHistoryTop}
-            devDragsStatus={devDragsStatus}
             setDevDragsStatus={setDevDragsStatus}
-            dragCount={dragCount}
+            devForCount={devForCount}
           >
             {
               <img

@@ -3,6 +3,7 @@ import React, { useRef, useState } from 'react';
 import Bar from './gameSession/bar/Bar';
 import Deck from './gameSession/deck/Deck';
 import Btns from './gameSession/footer/Btns';
+import About from './about/About';
 import DebugVisual from './dev/debugVisual/DebugVisual';
 import type { CardType, DragsStatusType } from './types/types';
 
@@ -41,6 +42,7 @@ function App() {
       </section>
 
       <DebugVisual devDragsStatus={devDragsStatus} devDeckVisible={devDeckVisible} />
+      <About />
     </>
   );
 }

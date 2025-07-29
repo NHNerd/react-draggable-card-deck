@@ -4,7 +4,6 @@ import type { CardType } from '../types/types';
 // Ace (Туз) / Jack (Валет) / Queen (Дама) / King (Король)
 
 const gameDeck = (): CardType[] => {
-  console.log();
   const suit: ['S', 'H', 'D', 'C'] = ['S', 'H', 'D', 'C'];
   const ranks: ['A', '2', '3', '4', '5', '6', '7', '8', '9', '0', 'J', 'Q', 'K'] = [
     'A',

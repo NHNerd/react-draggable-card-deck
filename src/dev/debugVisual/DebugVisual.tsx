@@ -15,25 +15,6 @@ function DebugVisual({ devDragsStatus, devDeckVisible }: DebugVisualProps) {
     opacity: 1,
   });
 
-  // const devDragsStatus: DragsStatusType[] = [
-  //   { dragNum: 1, card: '9K', status: 'sleep' },
-  //   { dragNum: 2, card: '0C', status: 'sleep' },
-  //   { dragNum: 3, card: 'JC', status: 'sleep' },
-  //   { dragNum: 4, card: 'QC', status: 'sleep' },
-  //   { dragNum: 5, card: 'KC', status: 'sleep' },
-  // ];
-  //   useEffect(() => {
-  // const fresh =
-
-  //     setDevDragsStatus([
-  //       { dragNum: 1, card: '9K', status: 'sleep' },
-  //       { dragNum: 2, card: '0C', status: 'sleep' },
-  //       { dragNum: 3, card: 'JC', status: 'sleep' },
-  //       { dragNum: 4, card: 'QC', status: 'sleep' },
-  //       { dragNum: 5, card: 'KC', status: 'sleep' },
-  //     ]);
-  //   }, [devDeckVisible]);
-
   return (
     <section className={DebugVisualCss.container}>
       <input
@@ -55,11 +36,13 @@ function DebugVisual({ devDragsStatus, devDeckVisible }: DebugVisualProps) {
             ({devDragsStatus.length})
           </div>
         </div>
-        {/* devDragsStatus.length !== 0 ?? */}
+
         {devDragsStatus.map((drag, i) => {
           const total = devDragsStatus.length;
           const hue = Math.round((i / total) * 360);
           const color = `hsl(${hue}, 100%, 70%)`;
+
+          if (!drag) return <div style={{ color }}>null</div>;
 
           const debugFields = [
             { text: 'dragNum', val: drag.dragNum },

@@ -14,14 +14,12 @@ type Props = {
   deck: CardType[];
   setDeck: React.Dispatch<React.SetStateAction<CardType[]>>;
   deckRef: React.RefObject<CardType[]>;
-  index: number;
   card: CardType;
   rotateRand: number;
   deckHistory: React.RefObject<CardHistoryType[]>;
   deckHistoryTop: React.RefObject<CardHistoryType> | React.RefObject<null>;
-  devDragsStatus: DragsStatusType[];
   setDevDragsStatus: React.Dispatch<React.SetStateAction<DragsStatusType[]>>;
-  dragCount: number;
+  devForCount: React.RefObject<number>;
 };
 
 const Draggable = ({
@@ -30,14 +28,12 @@ const Draggable = ({
   deck,
   setDeck,
   deckRef,
-  index,
   card,
   rotateRand,
   deckHistory,
   deckHistoryTop,
-  devDragsStatus,
   setDevDragsStatus,
-  dragCount,
+  devForCount,
 }: Props) => {
   const pointerIdRef = useRef<number | null>(null); //* Multi-touch
 
@@ -68,6 +64,17 @@ const Draggable = ({
       return cardItem.id !== card.id;
     });
   };
+  // const hasInitialized = useRef(false);
+  // useEffect(() => {
+  //   if (hasInitialized.current) return;
+  //   hasInitialized.current = true;
+
+  //   console.log('🗝️mount', card.img);
+  //   // unMount
+  //   return () => {
+  //     console.log('🏃‍♂️unmount', card.img);
+  //   };
+  // }, []);
 
   useEffect(() => {
     xyRef.current = xy;
@@ -101,7 +108,7 @@ const Draggable = ({
         if (isCardOut) {
           cardOutHndlr(card.id, deckRef, setDeck, xyRef, setXy, draggedId, removeCard, flingSpeed);
           // DEV
-          devInfoCardOut(setDevDragsStatus, deckRef.current, card, dragCount);
+          devInfoCardOut(setDevDragsStatus, deckRef.current, card, devForCount);
           return;
         }
 
@@ -113,7 +120,7 @@ const Draggable = ({
         xyPrev.current = { ...xyRef.current };
 
         // DEV
-        devChangeStatus(setDevDragsStatus, card, 'fling');
+        devChangeStatus(setDevDragsStatus, card, 'fling', devForCount);
       }
       //!--------------------------------------------------------------
       else if (isDraggingRef.current) {
@@ -137,7 +144,7 @@ const Draggable = ({
             if (isCardOut) {
               cardOutHndlr(card.id, deckRef, setDeck, xyRef, setXy, draggedId, removeCard, flingSpeed);
               // DEV
-              devInfoCardOut(setDevDragsStatus, deckRef.current, card, dragCount);
+              devInfoCardOut(setDevDragsStatus, deckRef.current, card, devForCount);
 
               return;
             }
@@ -166,7 +173,8 @@ const Draggable = ({
               // DEV
               setDevDragsStatus((prev) => {
                 const fresh = [...prev];
-                for (let i = 0; i < prev.length; i++) {
+                for (let i = 0; i < devForCount.current; i++) {
+                  if (!prev[i]) continue;
                   if (prev[i].id === card.id) {
                     fresh[i].status = 'sleep';
                     break;
@@ -200,7 +208,7 @@ const Draggable = ({
             });
 
             //Dev
-            devChangeStatus(setDevDragsStatus, card, 'backToDeck');
+            devChangeStatus(setDevDragsStatus, card, 'backToDeck', devForCount);
           }
         } else {
           //* Fling
@@ -216,7 +224,7 @@ const Draggable = ({
               flingSpeed
             );
             // DEV
-            devInfoCardOut(setDevDragsStatus, deckRef.current, card, dragCount);
+            devInfoCardOut(setDevDragsStatus, deckRef.current, card, devForCount);
             return;
           }
 
@@ -226,7 +234,7 @@ const Draggable = ({
           });
           xyPrev.current = { ...xyRef.current };
           // DEV
-          devChangeStatus(setDevDragsStatus, card, 'fling');
+          devChangeStatus(setDevDragsStatus, card, 'fling', devForCount);
         }
       }
     };
@@ -280,7 +288,7 @@ const Draggable = ({
       // dev
       //TODO DEV
 
-      devChangeStatus(setDevDragsStatus, card, 'drag');
+      devChangeStatus(setDevDragsStatus, card, 'drag', devForCount);
     };
 
     const hndlrMove = (e: PointerEvent) => {

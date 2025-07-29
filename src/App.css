@@ -5,6 +5,7 @@
   justify-content: space-evenly;
   align-items: center;
   inset: 0;
+  overflow: hidden;
 }
 .flexChildren1,
 .flexChildren2,

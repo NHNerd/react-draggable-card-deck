@@ -120,23 +120,25 @@ function Deck({ btns, btnsSet, devDeckRestSet, devDeckVisibleSet, setDevDragsSta
     dragCountUpdate(draggedId, dragCountLimit, dragCountRef, dragCount, setDragCount);
   }, [btns.left, btns.right]);
 
+  const [imgHasError, setImgHasError] = useState(false);
+
   return (
     <div className={DeckCss.deck}>
       {deckVisible.map((card, i) => {
         const rotate = (card.random ?? 0) * 14;
+        // react-draggable-card-deck
+
+        const src = imgHasError ? `${import.meta.env.BASE_URL}/anime.png` : card.img;
 
         if (i < deckVisible.length - dragCount)
           return (
             <img
               className={DeckCss.card}
               key={card.id}
-              src={card.img}
+              src={src}
               alt='card'
               loading='lazy'
-              onError={(e) => {
-                const target = e.currentTarget as HTMLImageElement;
-                target.src = `${import.meta.env.BASE_URL}back.jpg`;
-              }}
+              onError={() => setImgHasError(true)}
               style={{ transform: `rotate(${rotate}deg)` }}
             />
           );
@@ -162,13 +164,10 @@ function Deck({ btns, btnsSet, devDeckRestSet, devDeckVisibleSet, setDevDragsSta
             {
               <img
                 className={DeckCss.card}
-                src={card.img}
+                src={src}
                 alt='card'
                 loading='lazy'
-                onError={(e) => {
-                  const target = e.currentTarget as HTMLImageElement;
-                  target.src = `${import.meta.env.BASE_URL}back.jpg`; // /react-draggable-card-deck/back.jpg - автоматически, если base задан в Vite.
-                }}
+                onError={() => setImgHasError(true)}
               />
             }
           </Draggable>

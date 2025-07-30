@@ -1,0 +1,13 @@
+.aboutBtn {
+  margin: 10px;
+  padding: 10px;
+  position: absolute;
+  top: 0;
+  right: 0;
+  user-select: none;
+  font-size: 18px;
+}
+
+.opacity0 {
+  opacity: 0;
+}

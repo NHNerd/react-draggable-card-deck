@@ -3,6 +3,7 @@ import React, { useRef, useState } from 'react';
 import Bar from './gameSession/bar/Bar';
 import Deck from './gameSession/deck/Deck';
 import Btns from './gameSession/footer/Btns';
+import About from './about/About';
 import DebugVisual from './dev/debugVisual/DebugVisual';
 import type { CardType, DragsStatusType } from './types/types';
 
@@ -18,6 +19,7 @@ function App() {
   const [devDeckRest, devDeckRestSet] = useState<number>(0);
   const [devDragsStatus, setDevDragsStatus] = useState<DragsStatusType[]>([]);
   const [devDeckVisible, devDeckVisibleSet] = useState<CardType[]>([]);
+  const devSpeed = useRef<1 | 0.3 | 0.05>(1);
 
   return (
     <>
@@ -31,8 +33,8 @@ function App() {
             btnsSet={btnsSet}
             devDeckRestSet={devDeckRestSet}
             devDeckVisibleSet={devDeckVisibleSet}
-            devDragsStatus={devDragsStatus}
             setDevDragsStatus={setDevDragsStatus}
+            devSpeed={devSpeed}
           />
         </section>
         <section className='flexChildren3'>
@@ -40,7 +42,8 @@ function App() {
         </section>
       </section>
 
-      <DebugVisual devDragsStatus={devDragsStatus} devDeckVisible={devDeckVisible} />
+      <DebugVisual devDragsStatus={devDragsStatus} devDeckVisible={devDeckVisible} devSpeed={devSpeed} />
+      <About />
     </>
   );
 }

@@ -1,7 +1,7 @@
 import React, { useEffect, useRef, useState } from 'react';
 import type { XYType, CardType, CardHistoryType, BtnType, DragsStatusType } from '../../types/types';
 import { fling } from './features/calc';
-import { cardOutHndlr } from './features/actions.ts';
+import { cardOutHndlr, dragCountUpdate } from './features/actions.ts';
 // import { cardOutHndlr, CardOutHndlrType } from './features/actions.ts';
 import { nameFromImg, devChangeStatus, devInfoCardOut } from '../../dev/debugVisual/features.ts';
 import DraggableCss from './Draggable.module.css';
@@ -14,14 +14,16 @@ type Props = {
   deck: CardType[];
   setDeck: React.Dispatch<React.SetStateAction<CardType[]>>;
   deckRef: React.RefObject<CardType[]>;
-  index: number;
   card: CardType;
   rotateRand: number;
   deckHistory: React.RefObject<CardHistoryType[]>;
   deckHistoryTop: React.RefObject<CardHistoryType> | React.RefObject<null>;
-  devDragsStatus: DragsStatusType[];
   setDevDragsStatus: React.Dispatch<React.SetStateAction<DragsStatusType[]>>;
+  dragCountRef: React.RefObject<number>;
+  dragCountLimit: React.RefObject<number>;
   dragCount: number;
+  setDragCount: React.Dispatch<React.SetStateAction<number>>;
+  devSpeed: React.RefObject<1 | 0.3 | 0.05>;
 };
 
 const Draggable = ({
@@ -30,14 +32,16 @@ const Draggable = ({
   deck,
   setDeck,
   deckRef,
-  index,
   card,
   rotateRand,
   deckHistory,
   deckHistoryTop,
-  devDragsStatus,
   setDevDragsStatus,
+  dragCountRef,
+  dragCountLimit,
   dragCount,
+  setDragCount,
+  devSpeed,
 }: Props) => {
   const pointerIdRef = useRef<number | null>(null); //* Multi-touch
 
@@ -57,7 +61,8 @@ const Draggable = ({
   const dragHistory = React.useRef<{ pos: XYType; time: number }[]>([]);
   const flingSpeed = React.useRef<XYType | boolean>(false);
 
-  const comeToDeck50TrshHld = React.useRef<XYType | boolean>(false);
+  const comeBackToComeToDeckFlag = React.useRef<boolean>(false);
+  const comeBackFlag = React.useRef<boolean>(true);
 
   const removeCard: RemoveCardType = (deck, lastPos) => {
     return [...deck].filter((cardItem) => {
@@ -92,6 +97,14 @@ const Draggable = ({
 
       frameId = requestAnimationFrame(animate);
 
+      // Не уверен что это хорошо все время обьвлять функцию, но лучше так чем в 3 местах одинаковый код
+      const flingHndlr = () => {
+        cardOutHndlr(card.id, deckRef, setDeck, xyRef, setXy, draggedId, removeCard, flingSpeed);
+        dragCountUpdate(draggedId, dragCountLimit, dragCountRef, dragCount, setDragCount);
+        //? DEV
+        devInfoCardOut(setDevDragsStatus, deckRef.current, card, dragCountRef);
+      };
+
       //!--------------------------------------------------------------
       if (
         //* Fling BTN
@@ -99,21 +112,27 @@ const Draggable = ({
         card?.btnLR
       ) {
         if (isCardOut) {
-          cardOutHndlr(card.id, deckRef, setDeck, xyRef, setXy, draggedId, removeCard, flingSpeed);
-          // DEV
-          devInfoCardOut(setDevDragsStatus, deckRef.current, card, dragCount);
+          flingHndlr();
           return;
         }
 
         setXy((prev) => {
-          const speedX = (Math.max(window.innerWidth, cardWidth.current * 2) / cardWidth.current) * 3 + 8;
-          const speedY = 0.93 + speedX / 1600;
+          let speedX = (Math.max(window.innerWidth, cardWidth.current * 2) / cardWidth.current) * 3 + 8;
+          let speedY = 0.92 + speedX / 1600;
+          if (devSpeed.current === 0.3) {
+            speedX *= 0.16;
+            speedY += (1 - speedY) * 0.85;
+          } else if (devSpeed.current === 0.05) {
+            speedX *= 0.02;
+            speedY += (1 - speedY) * 0.988;
+          }
+
           return { x: prev.x + speedX * (card.btnLR === 'l' ? -1 : 1), y: prev.y * speedY };
         });
         xyPrev.current = { ...xyRef.current };
 
-        // DEV
-        devChangeStatus(setDevDragsStatus, card, 'fling');
+        //? DEV
+        devChangeStatus(setDevDragsStatus, card, 'fling', dragCountRef);
       }
       //!--------------------------------------------------------------
       else if (isDraggingRef.current) {
@@ -135,10 +154,7 @@ const Draggable = ({
             !card?.comeBack
           ) {
             if (isCardOut) {
-              cardOutHndlr(card.id, deckRef, setDeck, xyRef, setXy, draggedId, removeCard, flingSpeed);
-              // DEV
-              devInfoCardOut(setDevDragsStatus, deckRef.current, card, dragCount);
-
+              flingHndlr();
               return;
             }
             setXy((prev) => {
@@ -147,9 +163,11 @@ const Draggable = ({
             xyPrev.current = { ...xyRef.current };
           } else {
             //* Return to deck
+            //Sleep
             if (Math.abs(xyRef.current.x) < 0.5 && Math.abs(xyRef.current.y) < 0.5) {
-              xyPrev.current = { x: 0, y: 0 };
               draggedId.current.delete(card.id);
+
+              xyPrev.current = { x: 0, y: 0 };
               setXy({ x: 0, y: 0 });
               setDeck((prev) => {
                 const fresh = [...prev];
@@ -159,14 +177,16 @@ const Draggable = ({
                     delete fresh[i]?.btnLR;
                   }
                 }
-                comeToDeck50TrshHld.current = false;
+                comeBackToComeToDeckFlag.current = false;
+
                 return fresh;
               });
 
-              // DEV
+              //? DEV
               setDevDragsStatus((prev) => {
                 const fresh = [...prev];
-                for (let i = 0; i < prev.length; i++) {
+                for (let i = 0; i < dragCountRef.current; i++) {
+                  if (!prev[i]) continue;
                   if (prev[i].id === card.id) {
                     fresh[i].status = 'sleep';
                     break;
@@ -174,12 +194,19 @@ const Draggable = ({
                 }
                 return fresh;
               });
+              comeBackFlag.current = true;
+
+              dragCountUpdate(draggedId, dragCountLimit, dragCountRef, dragCount, setDragCount);
+
+              //! Bag - now если в very-slow оттащить много карт и потом переключиться в normal
+              //! то не все карты удаляются из draggedId
+              //!  console.log('💣 trying to remove', card.id, xyRef.current, draggedId.current);
               return;
             }
 
-            // Clear cards props for the back btn come active
-            if (Math.abs(xyRef.current.x) < window.innerWidth * 0.2 && !comeToDeck50TrshHld.current) {
-              comeToDeck50TrshHld.current = true;
+            // Clearing cards props for the back btn comes active
+            if (Math.abs(xyRef.current.x) < window.innerWidth * 0.2 && !comeBackToComeToDeckFlag.current) {
+              comeBackToComeToDeckFlag.current = true;
               setDeck((prev) => {
                 const fresh = [...prev];
                 for (let i = 0; i < fresh.length; i++) {
@@ -190,43 +217,43 @@ const Draggable = ({
                 }
                 return fresh;
               });
+
+              //? DEV
+              devChangeStatus(setDevDragsStatus, card, 'backToDeck', dragCountRef);
             }
 
             setXy((prev) => {
               xyPrev.current = { ...xyRef.current };
-              // const speed = 0.88;
-              const speed = 0.96;
+              let speed = 0.88;
+              if (devSpeed.current === 0.3) speed = 0.98;
+              else if (devSpeed.current === 0.05) speed = 0.9992;
               return { x: prev.x * speed, y: prev.y * speed };
             });
 
-            //Dev
-            devChangeStatus(setDevDragsStatus, card, 'backToDeck');
+            if (comeBackFlag.current && !card?.comeBack) {
+              //? DEV
+              devChangeStatus(setDevDragsStatus, card, 'backToDeck', dragCountRef);
+            }
+            comeBackFlag.current = false;
           }
         } else {
           //* Fling
           if (isCardOut) {
-            const deckFresh = cardOutHndlr(
-              card.id,
-              deckRef,
-              setDeck,
-              xyRef,
-              setXy,
-              draggedId,
-              removeCard,
-              flingSpeed
-            );
-            // DEV
-            devInfoCardOut(setDevDragsStatus, deckRef.current, card, dragCount);
+            flingHndlr();
             return;
           }
 
           setXy((prev) => {
             const speed = flingSpeed.current as XYType;
-            return { x: prev.x + speed.x * 8, y: prev.y + speed.y * 6 };
+            let devSpeedControl = 1;
+            if (devSpeed.current === 0.3) devSpeedControl = 0.4;
+            else if (devSpeed.current === 0.05) devSpeedControl = 0.04;
+
+            return { x: prev.x + speed.x * 8 * devSpeedControl, y: prev.y + speed.y * 6 * devSpeedControl };
           });
           xyPrev.current = { ...xyRef.current };
-          // DEV
-          devChangeStatus(setDevDragsStatus, card, 'fling');
+          //? DEV
+          devChangeStatus(setDevDragsStatus, card, 'fling', dragCountRef);
         }
       }
     };
@@ -236,7 +263,6 @@ const Draggable = ({
   }, []);
 
   useEffect(() => {
-    console.log('initialisation eventListners');
     if (!cardRef.current) return;
     const rect = cardRef.current?.getBoundingClientRect();
     cardWidth.current = rect.width;
@@ -245,7 +271,7 @@ const Draggable = ({
       e.preventDefault();
 
       if (isDraggingRef.current) return;
-      //TODO
+      //TODO     //TODO     //TODO     //TODO     //TODO     //TODO     //TODO     //TODO
       const cardIndex = deckRef.current.findIndex((cardItem) => cardItem.id === card.id);
       const topIndex = deckRef.current.length - 1;
       const draggedCount = draggedId.current.size;
@@ -257,9 +283,10 @@ const Draggable = ({
       delete deckRef.current[cardIndex]?.btnLR;
       delete deckRef.current[cardIndex]?.lastPos;
       delete deckRef.current[cardIndex]?.comeBack;
+
       setDeck(deckRef.current);
 
-      comeToDeck50TrshHld.current = false;
+      comeBackToComeToDeckFlag.current = false;
 
       xyStart.current = {
         x: e.clientX,
@@ -275,12 +302,12 @@ const Draggable = ({
 
       dragHistory.current = [{ pos: { x: e.clientX, y: e.clientY }, time: performance.now() }];
 
+      dragCountUpdate(draggedId, dragCountLimit, dragCountRef, dragCount, setDragCount);
       // console.log('🍏start');
 
       // dev
       //TODO DEV
-
-      devChangeStatus(setDevDragsStatus, card, 'drag');
+      devChangeStatus(setDevDragsStatus, card, 'drag', dragCountRef);
     };
 
     const hndlrMove = (e: PointerEvent) => {
@@ -294,7 +321,7 @@ const Draggable = ({
       };
 
       dragHistory.current.push({ pos: { x: e.clientX, y: e.clientY }, time: performance.now() });
-      // оставляем только последние 5 точек
+      // seve last 5 frames
       if (dragHistory.current.length > 5) dragHistory.current = dragHistory.current.slice(-5);
 
       // console.log('🍇move');
@@ -305,6 +332,8 @@ const Draggable = ({
       if (e.pointerId !== pointerIdRef.current) return;
 
       if (!isDraggingRef.current) return;
+
+      if (xyRef.current.x === 0 && xyRef.current.x === 0) draggedId.current.delete(card.id);
 
       isDraggingRef.current = false;
       setIsDragging(false);
@@ -318,6 +347,10 @@ const Draggable = ({
 
       flingSpeed.current = fling(dragHistory);
       dragHistory.current = [];
+
+      comeBackFlag.current = true;
+
+      dragCountUpdate(draggedId, dragCountLimit, dragCountRef, dragCount, setDragCount);
     };
 
     cardRef.current.addEventListener('pointerdown', hndlrStart);
@@ -353,4 +386,3 @@ const Draggable = ({
 };
 
 export default Draggable;
-// {/* rotate(${(cardRandom ?? 0) * 14 * 4}deg */}

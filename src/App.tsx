@@ -19,6 +19,7 @@ function App() {
   const [devDeckRest, devDeckRestSet] = useState<number>(0);
   const [devDragsStatus, setDevDragsStatus] = useState<DragsStatusType[]>([]);
   const [devDeckVisible, devDeckVisibleSet] = useState<CardType[]>([]);
+  const devSpeed = useRef<1 | 0.3 | 0.05>(1);
 
   return (
     <>
@@ -32,8 +33,8 @@ function App() {
             btnsSet={btnsSet}
             devDeckRestSet={devDeckRestSet}
             devDeckVisibleSet={devDeckVisibleSet}
-            devDragsStatus={devDragsStatus}
             setDevDragsStatus={setDevDragsStatus}
+            devSpeed={devSpeed}
           />
         </section>
         <section className='flexChildren3'>
@@ -41,7 +42,7 @@ function App() {
         </section>
       </section>
 
-      <DebugVisual devDragsStatus={devDragsStatus} devDeckVisible={devDeckVisible} />
+      <DebugVisual devDragsStatus={devDragsStatus} devDeckVisible={devDeckVisible} devSpeed={devSpeed} />
       <About />
     </>
   );

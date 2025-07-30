@@ -1,30 +1,24 @@
-import { useEffect, useRef, useState } from 'react';
+import React, { useEffect, useRef, useState, type RefObject } from 'react';
 import Draggable from '../../components/draggable/Draggable';
 import DeckCss from './Deck.module.css';
-import type { CardType, CardHistoryType, DragsStatusType } from '../../types/types';
+import type { CardType, CardHistoryType, DragsStatusType, DragsStatusStatusType } from '../../types/types';
 import gameDeck from '../../features/gameDeck';
 import { nameFromImg } from '../../dev/debugVisual/features';
+import { dragCountUpdate } from '../../components/draggable/features/actions';
 
 type DeckProps = {
   btns: { left: boolean; right: boolean; back: boolean; flip: boolean };
   btnsSet: React.Dispatch<React.SetStateAction<{ left: boolean; right: boolean; back: boolean; flip: boolean }>>;
   devDeckRestSet: React.Dispatch<React.SetStateAction<number>>;
   devDeckVisibleSet: React.Dispatch<React.SetStateAction<CardType[]>>;
-  devDragsStatus: DragsStatusType[];
   setDevDragsStatus: React.Dispatch<React.SetStateAction<DragsStatusType[]>>;
+  devSpeed: React.RefObject<1 | 0.3 | 0.05>;
 };
 
-function Deck({
-  btns,
-  btnsSet,
-  devDeckRestSet,
-  devDeckVisibleSet,
-  devDragsStatus,
-  setDevDragsStatus,
-}: DeckProps) {
+function Deck({ btns, btnsSet, devDeckRestSet, devDeckVisibleSet, setDevDragsStatus, devSpeed }: DeckProps) {
+  const dragCountLimit = useRef<number>(5);
   const [dragCount, setDragCount] = useState<number>(5);
   const dragCountRef = useRef<number>(5);
-  const devForCount = useRef<number>(5);
 
   const [deck, setDeck] = useState<CardType[]>([]);
   const deckRef = useRef<CardType[]>(deck);
@@ -37,7 +31,7 @@ function Deck({
 
   useEffect(() => {
     if (deck.length === 0) return;
-    const vis = [...deck].slice(-20);
+    const vis = [...deck].slice(-(dragCountLimit.current + 15));
     setDeckVisible(vis);
     devDeckVisibleSet(vis);
 
@@ -45,7 +39,7 @@ function Deck({
 
     // Dev
     devDeckRestSet(deck.length);
-  }, [deck, dragCount]);
+  }, [deck, dragCountLimit.current]);
 
   // Only first mount
   const hasInitialized = useRef(false);
@@ -57,8 +51,8 @@ function Deck({
     const deckFirst = gameDeck();
     setDeck(deckFirst);
 
-    for (let i = 0; i < dragCount; i++) {
-      const indexTop = deckFirst.length - dragCount + i;
+    for (let i = 0; i < dragCountLimit.current; i++) {
+      const indexTop = deckFirst.length - dragCountLimit.current + i;
       const cardName = nameFromImg(deckFirst, indexTop);
       setDevDragsStatus((prev) => {
         return [...prev, { id: deckFirst[indexTop].id, dragNum: prev.length, card: cardName, status: 'sleep' }];
@@ -77,50 +71,27 @@ function Deck({
         return;
       }
 
-      const size1 = 5;
-      const size2 = 15;
-      const draggedIdSize = draggedId.current.size;
-      if (draggedIdSize >= dragCount) {
-        setDragCount(size2);
-        dragCountRef.current = size2;
-        return;
-      } else if (dragCount === size2) {
-        setDragCount(size1);
-        dragCountRef.current = size1;
-      }
+      dragCountUpdate(draggedId, dragCountLimit, dragCountRef, dragCount, setDragCount);
 
       deckHistoryTop.current = deckHistory.current.pop() ?? null;
       const comeBackCard = { ...deckHistoryTop.current, comeBack: true };
-      setDeck([...deckRef.current, comeBackCard]);
+      const freshDeck = [...deckRef.current, comeBackCard];
+      setDeck(freshDeck);
 
       draggedId.current.add(comeBackCard.id);
 
-      // DEV
-      //TODO
-      devForCount.current = Math.max(size1, Math.min(dragCount, draggedIdSize));
-
       setDevDragsStatus((prev) => {
-        const fresh = [];
-        // console.log('🍒', devForCount.current);
-        for (let i = 0; i < devForCount.current; i++) {
-          if (i === 0) continue;
-          if (!prev[i]) {
-            fresh[i - 1] = null;
-            continue;
-          }
-          fresh[i - 1] = { ...prev[i], dragNum: prev[i].dragNum - 1 };
-        }
-        const maxI = dragCount - 1;
-        fresh[maxI] = {
-          id: comeBackCard.id,
-          dragNum: maxI,
-          card: nameFromImg([comeBackCard], 0),
-          status: 'comeBack',
-        };
+        const fresh: DragsStatusType[] = freshDeck.slice(-dragCountRef.current).map((card, i) => {
+          let status: DragsStatusStatusType = 'sleep';
+          if (card.comeBack) status = 'comeBack';
+          else if (card.id === prev[i].id) status = prev[i].status;
+          return { id: card.id, dragNum: i, card: nameFromImg([card], 0), status };
+        });
+
         return fresh;
       });
     }
-  }, [btns.back, dragCount]);
+  }, [btns.back, dragCount, dragCountLimit.current]);
 
   useEffect(() => {
     if (!btns.left && !btns.right) return;
@@ -140,6 +111,8 @@ function Deck({
     draggedId.current.add(deckRef.current[indexTop].id);
     deckRef.current[indexTop].btnLR = btns.left ? 'l' : 'r';
     setDeck(deckRef.current);
+
+    dragCountUpdate(draggedId, dragCountLimit, dragCountRef, dragCount, setDragCount);
   }, [btns.left, btns.right]);
 
   return (
@@ -157,7 +130,7 @@ function Deck({
               loading='lazy'
               onError={(e) => {
                 const target = e.currentTarget as HTMLImageElement;
-                target.src = '/back.jpg';
+                target.src = `${import.meta.env.BASE_URL}back.jpg`;
               }}
               style={{ transform: `rotate(${rotate}deg)` }}
             />
@@ -175,7 +148,11 @@ function Deck({
             deckHistory={deckHistory}
             deckHistoryTop={deckHistoryTop}
             setDevDragsStatus={setDevDragsStatus}
-            devForCount={devForCount}
+            dragCountRef={dragCountRef}
+            dragCountLimit={dragCountLimit}
+            dragCount={dragCount}
+            setDragCount={setDragCount}
+            devSpeed={devSpeed}
           >
             {
               <img
@@ -185,9 +162,8 @@ function Deck({
                 loading='lazy'
                 onError={(e) => {
                   const target = e.currentTarget as HTMLImageElement;
-                  target.src = '/back.jpg';
+                  target.src = `${import.meta.env.BASE_URL}back.jpg`; // /react-draggable-card-deck/back.jpg - автоматически, если base задан в Vite.
                 }}
-                // style={{ transform: rotate }}
               />
             }
           </Draggable>

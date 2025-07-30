@@ -1,5 +1,12 @@
 import React, { useEffect, useRef, useState } from 'react';
-import type { XYType, CardType, CardHistoryType, BtnType, DragsStatusType } from '../../types/types';
+import type {
+  XYType,
+  CardType,
+  CardHistoryType,
+  BtnType,
+  DragsStatusType,
+  DevSpeedControlType,
+} from '../../types/types';
 import { fling } from './features/calc';
 import { cardOutHndlr, dragCountUpdate } from './features/actions.ts';
 // import { cardOutHndlr, CardOutHndlrType } from './features/actions.ts';
@@ -23,7 +30,23 @@ type Props = {
   dragCountLimit: React.RefObject<number>;
   dragCount: number;
   setDragCount: React.Dispatch<React.SetStateAction<number>>;
-  devSpeed: React.RefObject<1 | 0.3 | 0.05>;
+  devSpeed: React.RefObject<DevSpeedControlType>;
+};
+
+const flingAddRL = (
+  card: CardType,
+  deckRef: React.RefObject<CardType[]>,
+  flingOrXY: XYType,
+  setDeck: React.Dispatch<React.SetStateAction<CardType[]>>
+) => {
+  const deckFresh = [...deckRef.current];
+  for (let i = deckFresh.length - 1; i >= 0; i--) {
+    if (deckFresh[i].id === card.id) {
+      deckFresh[i].btnLR = flingOrXY.x < 0 ? 'l' : 'r';
+      break;
+    }
+  }
+  setDeck(deckFresh);
 };
 
 const Draggable = ({
@@ -63,6 +86,7 @@ const Draggable = ({
 
   const comeBackToComeToDeckFlag = React.useRef<boolean>(false);
   const comeBackFlag = React.useRef<boolean>(true);
+  const flingFlag = React.useRef<boolean>(true);
 
   const removeCard: RemoveCardType = (deck, lastPos) => {
     return [...deck].filter((cardItem) => {
@@ -103,6 +127,7 @@ const Draggable = ({
         dragCountUpdate(draggedId, dragCountLimit, dragCountRef, dragCount, setDragCount);
         //? DEV
         devInfoCardOut(setDevDragsStatus, deckRef.current, card, dragCountRef);
+        flingFlag.current = true;
       };
 
       //!--------------------------------------------------------------
@@ -119,10 +144,10 @@ const Draggable = ({
         setXy((prev) => {
           let speedX = (Math.max(window.innerWidth, cardWidth.current * 2) / cardWidth.current) * 3 + 8;
           let speedY = 0.92 + speedX / 1600;
-          if (devSpeed.current === 0.3) {
+          if (devSpeed.current === 'slow') {
             speedX *= 0.16;
             speedY += (1 - speedY) * 0.85;
-          } else if (devSpeed.current === 0.05) {
+          } else if (devSpeed.current === 'very-slow') {
             speedX *= 0.02;
             speedY += (1 - speedY) * 0.988;
           }
@@ -157,10 +182,19 @@ const Draggable = ({
               flingHndlr();
               return;
             }
+            let devSpeedControl = 1;
+            if (devSpeed.current === 'slow') devSpeedControl = 0.4;
+            else if (devSpeed.current === 'very-slow') devSpeedControl = 0.04;
+
             setXy((prev) => {
-              return { x: prev.x + 10 * Math.sign(xyRef.current.x), y: prev.y };
+              return { x: prev.x + 10 * Math.sign(xyRef.current.x) * devSpeedControl, y: prev.y };
             });
             xyPrev.current = { ...xyRef.current };
+
+            if (flingFlag.current) {
+              flingAddRL(card, deckRef, xyRef.current, setDeck);
+              flingFlag.current = false;
+            }
           } else {
             //* Return to deck
             //Sleep
@@ -225,16 +259,16 @@ const Draggable = ({
             setXy((prev) => {
               xyPrev.current = { ...xyRef.current };
               let speed = 0.88;
-              if (devSpeed.current === 0.3) speed = 0.98;
-              else if (devSpeed.current === 0.05) speed = 0.9992;
+              if (devSpeed.current === 'slow') speed = 0.98;
+              else if (devSpeed.current === 'very-slow') speed = 0.9992;
               return { x: prev.x * speed, y: prev.y * speed };
             });
 
             if (comeBackFlag.current && !card?.comeBack) {
               //? DEV
               devChangeStatus(setDevDragsStatus, card, 'backToDeck', dragCountRef);
+              comeBackFlag.current = false;
             }
-            comeBackFlag.current = false;
           }
         } else {
           //* Fling
@@ -246,14 +280,21 @@ const Draggable = ({
           setXy((prev) => {
             const speed = flingSpeed.current as XYType;
             let devSpeedControl = 1;
-            if (devSpeed.current === 0.3) devSpeedControl = 0.4;
-            else if (devSpeed.current === 0.05) devSpeedControl = 0.04;
+            if (devSpeed.current === 'slow') devSpeedControl = 0.4;
+            else if (devSpeed.current === 'very-slow') devSpeedControl = 0.04;
 
             return { x: prev.x + speed.x * 8 * devSpeedControl, y: prev.y + speed.y * 6 * devSpeedControl };
           });
           xyPrev.current = { ...xyRef.current };
-          //? DEV
-          devChangeStatus(setDevDragsStatus, card, 'fling', dragCountRef);
+
+          if (flingFlag.current) {
+            const speed = flingSpeed.current as XYType;
+            flingAddRL(card, deckRef, speed, setDeck);
+
+            //? DEV
+            devChangeStatus(setDevDragsStatus, card, 'fling', dragCountRef);
+            flingFlag.current = false;
+          }
         }
       }
     };
@@ -349,6 +390,7 @@ const Draggable = ({
       dragHistory.current = [];
 
       comeBackFlag.current = true;
+      flingFlag.current = true;
 
       dragCountUpdate(draggedId, dragCountLimit, dragCountRef, dragCount, setDragCount);
     };

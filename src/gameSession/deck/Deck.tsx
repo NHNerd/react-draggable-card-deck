@@ -1,7 +1,13 @@
 import React, { useEffect, useRef, useState, type RefObject } from 'react';
 import Draggable from '../../components/draggable/Draggable';
 import DeckCss from './Deck.module.css';
-import type { CardType, CardHistoryType, DragsStatusType, DragsStatusStatusType } from '../../types/types';
+import type {
+  CardType,
+  CardHistoryType,
+  DragsStatusType,
+  DragsStatusStatusType,
+  DevSpeedControlType,
+} from '../../types/types';
 import gameDeck from '../../features/gameDeck';
 import { nameFromImg } from '../../dev/debugVisual/features';
 import { dragCountUpdate } from '../../components/draggable/features/actions';
@@ -12,7 +18,7 @@ type DeckProps = {
   devDeckRestSet: React.Dispatch<React.SetStateAction<number>>;
   devDeckVisibleSet: React.Dispatch<React.SetStateAction<CardType[]>>;
   setDevDragsStatus: React.Dispatch<React.SetStateAction<DragsStatusType[]>>;
-  devSpeed: React.RefObject<1 | 0.3 | 0.05>;
+  devSpeed: React.RefObject<DevSpeedControlType>;
 };
 
 function Deck({ btns, btnsSet, devDeckRestSet, devDeckVisibleSet, setDevDragsStatus, devSpeed }: DeckProps) {
@@ -105,7 +111,6 @@ function Deck({ btns, btnsSet, devDeckRestSet, devDeckVisibleSet, setDevDragsSta
     }
 
     const indexTop = deckRef.current.length - 1 - (draggedId.current.size - notRLDraged);
-    // console.log(deckRef.current[indexTop]);
     if (deckRef.current[indexTop].btnLR || deckRef.current[indexTop]?.comeBack) return;
 
     draggedId.current.add(deckRef.current[indexTop].id);

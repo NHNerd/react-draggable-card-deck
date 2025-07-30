@@ -1,12 +1,12 @@
 import React, { useState, useRef, useEffect, type JSX, Fragment } from 'react';
 import { nameFromImg } from './features';
-import type { CardType, DragsStatusType } from '../../types/types';
+import type { CardType, DragsStatusType, DevSpeedControlType } from '../../types/types';
 import DebugVisualCss from './DebugVisual.module.css';
 
 type DebugVisualProps = {
   devDragsStatus: DragsStatusType[];
   devDeckVisible: CardType[];
-  devSpeed: React.RefObject<1 | 0.3 | 0.05>;
+  devSpeed: React.RefObject<DevSpeedControlType>;
 };
 
 function DebugVisual({ devDragsStatus, devDeckVisible, devSpeed }: DebugVisualProps) {
@@ -16,11 +16,9 @@ function DebugVisual({ devDragsStatus, devDeckVisible, devSpeed }: DebugVisualPr
     opacity: 1,
   });
 
-  type DevSpeedHndlrType = (devSpeed: React.RefObject<1 | 0.3 | 0.05>, select: string) => void;
+  type DevSpeedHndlrType = (devSpeed: React.RefObject<DevSpeedControlType>, select: DevSpeedControlType) => void;
   const devSpeedHndlr: DevSpeedHndlrType = (devSpeed, select) => {
-    if (select === 'normal') devSpeed.current = 1;
-    else if (select === 'slow') devSpeed.current = 0.3;
-    else if (select === 'very-slow') devSpeed.current = 0.05;
+    devSpeed.current = select;
   };
 
   const selectJSX = (label: string, name: string, opts: string[], devSpeedHndlr: DevSpeedHndlrType) => {
@@ -30,7 +28,7 @@ function DebugVisual({ devDragsStatus, devDeckVisible, devSpeed }: DebugVisualPr
           {label}:
         </label>
         <select
-          onChange={(e) => devSpeedHndlr(devSpeed, e.target.value)}
+          onChange={(e) => devSpeedHndlr(devSpeed, e.target.value as DevSpeedControlType)}
           id={name}
           className={DebugVisualCss.select}
           name={name}

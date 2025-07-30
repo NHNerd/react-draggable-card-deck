@@ -14,7 +14,8 @@ export const fling = (
   const speedX = Math.abs(dx) / dt; // px per ms
   const speedY = Math.abs(dy) / dt; // px per ms
 
-  const SPEED_THRESHOLD = 1.2;
+  //TODO сдеалать адаптивным к screen width - чем шире тем больше
+  const SPEED_THRESHOLD = 0.6;
 
   // Проверим, не тормознул ли пользователь резко в конце:
   const secondLast = history[history.length - 2];

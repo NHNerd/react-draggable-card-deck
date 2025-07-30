@@ -134,13 +134,14 @@ const Draggable = ({
       if (
         //* Fling BTN
         draggedId.current.has(card.id) &&
-        card?.btnLR
+        card?.btnLR &&
+        !flingSpeed.current
       ) {
         if (isCardOut) {
           flingHndlr();
           return;
         }
-
+        console.log(2);
         setXy((prev) => {
           let speedX = (Math.max(window.innerWidth, cardWidth.current * 2) / cardWidth.current) * 3 + 8;
           let speedY = 0.92 + speedX / 1600;

@@ -19,3 +19,5 @@ export type DragsStatusType = {
   card: string;
   status: DragsStatusStatusType;
 };
+
+export type DevSpeedControlType = 'normal' | 'slow' | 'very-slow';

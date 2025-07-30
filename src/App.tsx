@@ -5,7 +5,7 @@ import Deck from './gameSession/deck/Deck';
 import Btns from './gameSession/footer/Btns';
 import About from './about/About';
 import DebugVisual from './dev/debugVisual/DebugVisual';
-import type { CardType, DragsStatusType } from './types/types';
+import type { CardType, DragsStatusType, DevSpeedControlType } from './types/types';
 
 import './App.css';
 
@@ -19,7 +19,7 @@ function App() {
   const [devDeckRest, devDeckRestSet] = useState<number>(0);
   const [devDragsStatus, setDevDragsStatus] = useState<DragsStatusType[]>([]);
   const [devDeckVisible, devDeckVisibleSet] = useState<CardType[]>([]);
-  const devSpeed = useRef<1 | 0.3 | 0.05>(1);
+  const devSpeed = useRef<DevSpeedControlType>('normal');
 
   return (
     <>

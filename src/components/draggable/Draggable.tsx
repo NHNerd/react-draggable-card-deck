@@ -3,8 +3,7 @@ import type { XYType, CardType, DragsStatusType, DevSpeedControlType } from '../
 import { fling } from './features/calc';
 import { dragCountUpdate } from './features/actions.ts';
 // import { cardOutHndlr, CardOutHndlrType } from './features/actions.ts';
-import { nameFromImg, devChangeStatus } from '../../dev/debugVisual/features.ts';
-import SideGlow from './components/SideGlow.tsx';
+import { devChangeStatus } from '../../dev/debugVisual/features.ts';
 import DraggableCss from './Draggable.module.css';
 
 type Props = {
@@ -389,8 +388,6 @@ const Draggable = ({
           {children}
         </div>
       </div>
-      {/* needs put it on deck's level */}
-      {/* <SideGlow xyRef={xyRef} /> */}
     </>
   );
 };

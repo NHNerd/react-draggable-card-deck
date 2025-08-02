@@ -31,7 +31,7 @@ export const devChangeStatus = (
 
 export const devInfoCardOut = (
   setDevDragsStatus: React.Dispatch<React.SetStateAction<DragsStatusType[]>>,
-  deck: CardType[],
+  deckRef: React.RefObject<CardType[]>,
   card: CardType,
   dragCountRef: React.RefObject<number>
 ) => {
@@ -49,7 +49,8 @@ export const devInfoCardOut = (
       fresh[newIndex] = { ...prev[i], dragNum: newIndex };
     }
     //TODO
-    const newCard = deck[deck.length - 1 - Math.min(dragCountRef.current, deck.length - 1)];
+    const newCard =
+      deckRef.current[deckRef.current.length - 1 - Math.min(dragCountRef.current, deckRef.current.length - 1)];
     fresh[0] = { id: newCard.id, dragNum: 0, card: nameFromImg([newCard], 0), status: 'sleep' };
     return fresh;
   });

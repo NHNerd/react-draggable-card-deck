@@ -1,0 +1,22 @@
+.wrong,
+.right {
+  position: fixed;
+  height: 30%;
+  top: 50%;
+  transform: translate(0, -50%);
+  width: 20%;
+
+  filter: blur(100px);
+  pointer-events: none;
+  user-select: none;
+  touch-action: none;
+}
+
+.wrong {
+  background-color: rgb(251, 152, 220);
+  left: -14%;
+}
+.right {
+  background-color: palegreen;
+  right: -14%;
+}

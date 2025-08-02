@@ -11,7 +11,7 @@ import type {
 import SideGlowCss from './SideGlow.module.css';
 
 type Props = {
-  devSpeed: React.RefObject<XYType>;
+  xyRef: React.RefObject<XYType>;
 };
 
 const SideGlow = ({ xyRef }: Props) => {

@@ -291,7 +291,28 @@ const Draggable = ({
       delete deckRef.current[cardIndex]?.lastPos;
       delete deckRef.current[cardIndex]?.comeBack;
 
-      setDeck(deckRef.current);
+      const pickedToTop = () => {
+        const deck = deckRef.current;
+        let index = -1;
+
+        for (let i = deck.length - 1; i >= 0; i--) {
+          if (deck[i].id === card.id) {
+            index = i;
+            break;
+          }
+        }
+
+        if (index === -1) return;
+
+        const thisCard = deck[index];
+        const newDeck = [...deck.slice(0, index), ...deck.slice(index + 1), thisCard];
+
+        deckRef.current = newDeck;
+        setDeck(newDeck);
+      };
+      pickedToTop();
+
+      // setDeck(deckRef.current);
 
       comeBackToComeToDeckFlag.current = false;
 

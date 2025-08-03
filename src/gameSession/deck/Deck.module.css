@@ -12,7 +12,6 @@
   -webkit-user-select: none;
   -webkit-tap-highlight-color: transparent; /* 🧽 убирает синюю подсветку при тапе */
   -webkit-touch-callout: none; /* ❌ запрещает контекстное меню на iOS */
-
   z-index: 1;
 }
 

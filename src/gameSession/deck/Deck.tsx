@@ -12,17 +12,17 @@ import type {
 import gameDeck from '../../features/gameDeck';
 import { nameFromImg, devChangeStatus } from '../../dev/debugVisual/features';
 import { dragCountUpdate } from '../../components/draggable/features/actions';
+import type { BtnType } from '../../types/types';
 
 type DeckProps = {
-  btns: { left: boolean; right: boolean; back: boolean; flip: boolean };
-  btnsSet: React.Dispatch<React.SetStateAction<{ left: boolean; right: boolean; back: boolean; flip: boolean }>>;
+  setBtnHndlr: (handler: (btn: BtnType) => void) => void;
   devDeckRestSet: React.Dispatch<React.SetStateAction<number>>;
   devDeckVisibleSet: React.Dispatch<React.SetStateAction<CardType[]>>;
   setDevDragsStatus: React.Dispatch<React.SetStateAction<DragsStatusType[]>>;
   devSpeed: React.RefObject<DevSpeedControlType>;
 };
 
-const Deck = ({ btns, btnsSet, devDeckRestSet, devDeckVisibleSet, setDevDragsStatus, devSpeed }: DeckProps) => {
+const Deck = ({ setBtnHndlr, devDeckRestSet, devDeckVisibleSet, setDevDragsStatus, devSpeed }: DeckProps) => {
   const dragCountLimit = useRef<number>(5);
   const [dragCount, setDragCount] = useState<number>(5);
   const dragCountRef = useRef<number>(5);
@@ -35,9 +35,6 @@ const Deck = ({ btns, btnsSet, devDeckRestSet, devDeckVisibleSet, setDevDragsSta
   const [deckVisible, setDeckVisible] = useState<CardType[]>([]);
 
   const draggedId = useRef<Set<number>>(new Set([]));
-
-  // Я могу вынести glow(right/wrong) на урвовень deck и управлять им by max и min value of xyDragged(всех карт в !== sleep)
-  const xyDragged = useRef<XYType[]>([]);
 
   // Удаление карточки:
   //* I. Clear
@@ -54,6 +51,7 @@ const Deck = ({ btns, btnsSet, devDeckRestSet, devDeckVisibleSet, setDevDragsSta
   };
   const counter1Ref: React.RefObject<(n?: number) => number> = useRef(closure());
   const counter2Ref: React.RefObject<(n?: number) => number> = useRef(closure());
+  const counter3Ref: React.RefObject<(n?: number) => number> = useRef(closure());
 
   // console.log('🍒', counter2Ref.current(), 'Deck Re-Render');
   const cardOutHndlr = (cardId: number, direction: 'string', lastPos: XYType, codePoint: string) => {
@@ -97,7 +95,7 @@ const Deck = ({ btns, btnsSet, devDeckRestSet, devDeckVisibleSet, setDevDragsSta
           const prevStatus = prevJ.find((j) => j.id === card.id)?.status;
 
           let status: DragsStatusStatusType = 'sleep';
-          if (card.comeBack) status = 'comeBack';
+          if (card?.lastPos) status = 'comeBack';
           else if (prevStatus) status = prevStatus;
           return { id: card.id, dragNum: i, card: nameFromImg([card], 0), status };
         });
@@ -107,14 +105,47 @@ const Deck = ({ btns, btnsSet, devDeckRestSet, devDeckVisibleSet, setDevDragsSta
     });
   };
 
+  const btnSwipeHndlr = (direction: 'l' | 'r') => {
+    let notRLDraged: number = 0;
+
+    for (let i = 0; i < draggedId.current.size; i++) {
+      if (!deckRef.current[deckRef.current.length - 1 - i]?.btnLR) notRLDraged++;
+    }
+
+    const indexTop = deckRef.current.length - 1 - (draggedId.current.size - notRLDraged);
+    const topCard = deckRef.current[indexTop];
+
+    if (!topCard || topCard?.btnLR || topCard?.lastPos) return;
+
+    draggedId.current.add(topCard.id);
+    topCard.btnLR = direction;
+    setDeck(deckRef.current);
+
+    dragCountUpdate(draggedId, dragCountLimit, dragCountRef, setDragCount);
+
+    //? DEV
+    setDevDragsStatus((prevJ) => {
+      const fresh: DragsStatusType[] = deckRef.current.slice(-dragCountRef.current).map((card, i) => {
+        const prevStatus = prevJ.find((j) => j.id === card.id)?.status;
+
+        let status: DragsStatusStatusType = 'sleep';
+        if (card.lastPos) status = 'comeBack';
+        else if (card.id === topCard.id) status = 'fling';
+        else if (prevStatus) status = prevStatus;
+        return { id: card.id, dragNum: i, card: nameFromImg([card], 0), status };
+      });
+      return fresh;
+    });
+  };
+
   const hasInitialized = useRef(false);
   useEffect(() => {
     if (hasInitialized.current) return;
     hasInitialized.current = true;
 
+    // deck Initialization
     const deckFirst = gameDeck();
     setDeck(deckFirst);
-
     for (let i = 0; i < dragCountLimit.current; i++) {
       const indexTop = deckFirst.length - dragCountLimit.current + i;
       const cardName = nameFromImg(deckFirst, indexTop);
@@ -122,6 +153,52 @@ const Deck = ({ btns, btnsSet, devDeckRestSet, devDeckVisibleSet, setDevDragsSta
         return [...prev, { id: deckFirst[indexTop].id, dragNum: prev.length, card: cardName, status: 'sleep' }];
       });
     }
+
+    // btns action
+    const btnHndlr = (btn: BtnType) => {
+      if (btn === 'left') btnSwipeHndlr('l');
+      else if (btn === 'right') btnSwipeHndlr('r');
+      else if (btn === 'back') {
+        if (deckHistory.current.length === 0) {
+          deckHistoryTop.current = null;
+          return;
+        }
+        if (deckRef.current.some((card) => card.id === deckHistory.current[deckHistory.current.length - 1].id)) {
+          console.warn('🔁 Карта уже в колоде, повторное добавление пропущено');
+          return;
+        }
+        if (draggedId.current.size >= dragCountLimit.current) return;
+
+        deckHistoryTop.current = deckHistory.current.pop() ?? null;
+        const comeBackCard = { ...deckHistoryTop.current };
+
+        setDeck((prev) => {
+          const freshDeck = [...prev, comeBackCard];
+          deckRef.current = freshDeck;
+
+          draggedId.current.add(comeBackCard.id);
+          dragCountUpdate(draggedId, dragCountLimit, dragCountRef, setDragCount);
+
+          setDevDragsStatus((prevJ) => {
+            const fresh: DragsStatusType[] = freshDeck.slice(-dragCountRef.current).map((card, i) => {
+              const prevStatus = prevJ.find((j) => j.id === card.id)?.status;
+
+              let status: DragsStatusStatusType = 'sleep';
+              if (card?.lastPos) status = 'comeBack';
+              else if (prevStatus) status = prevStatus;
+              return { id: card.id, dragNum: i, card: nameFromImg([card], 0), status };
+            });
+            return fresh;
+          });
+
+          return freshDeck;
+        });
+      } else if (btn === 'flip') {
+        // console.log('flip');
+      }
+    };
+
+    setBtnHndlr(btnHndlr);
   }, []);
 
   useEffect(() => {
@@ -136,83 +213,6 @@ const Deck = ({ btns, btnsSet, devDeckRestSet, devDeckVisibleSet, setDevDragsSta
     // Dev
     devDeckRestSet(deck.length);
   }, [deck, dragCountLimit.current]);
-
-  useEffect(() => {
-    if (!btns.back) return;
-
-    if (deckHistory.current.length === 0) {
-      deckHistoryTop.current = null;
-      return;
-    }
-    if (deckRef.current.some((card) => card.id === deckHistory.current[deckHistory.current.length - 1].id)) {
-      console.warn('🔁 Карта уже в колоде, повторное добавление пропущено');
-      return;
-    }
-    if (draggedId.current.size >= dragCountLimit.current) return;
-
-    deckHistoryTop.current = deckHistory.current.pop() ?? null;
-    const comeBackCard = { ...deckHistoryTop.current, comeBack: true };
-
-    setDeck((prev) => {
-      const freshDeck = [...prev, comeBackCard];
-      deckRef.current = freshDeck;
-
-      draggedId.current.add(comeBackCard.id);
-      dragCountUpdate(draggedId, dragCountLimit, dragCountRef, setDragCount);
-
-      setDevDragsStatus((prevJ) => {
-        const fresh: DragsStatusType[] = freshDeck.slice(-dragCountRef.current).map((card, i) => {
-          const prevStatus = prevJ.find((j) => j.id === card.id)?.status;
-
-          let status: DragsStatusStatusType = 'sleep';
-          if (card.comeBack) status = 'comeBack';
-          else if (prevStatus) status = prevStatus;
-          return { id: card.id, dragNum: i, card: nameFromImg([card], 0), status };
-        });
-        return fresh;
-      });
-
-      return freshDeck;
-    });
-
-    btnsSet((prev) => ({ ...prev, back: false }));
-  }, [btns.back]);
-
-  useEffect(() => {
-    if (!btns.left && !btns.right) return;
-    btnsSet((prev) => ({ ...prev, left: false, right: false }));
-
-    let notRLDraged: number = 0;
-
-    for (let i = 0; i < draggedId.current.size; i++) {
-      if (!deckRef.current[deckRef.current.length - 1 - i]?.btnLR) notRLDraged++;
-    }
-
-    const indexTop = deckRef.current.length - 1 - (draggedId.current.size - notRLDraged);
-    const topCard = deckRef.current[indexTop];
-
-    if (!topCard || topCard?.btnLR || topCard?.comeBack) return;
-
-    draggedId.current.add(topCard.id);
-    topCard.btnLR = btns.left ? 'l' : 'r';
-    setDeck(deckRef.current);
-
-    dragCountUpdate(draggedId, dragCountLimit, dragCountRef, setDragCount);
-
-    //? DEV
-    setDevDragsStatus((prevJ) => {
-      const fresh: DragsStatusType[] = deckRef.current.slice(-dragCountRef.current).map((card, i) => {
-        const prevStatus = prevJ.find((j) => j.id === card.id)?.status;
-
-        let status: DragsStatusStatusType = 'sleep';
-        if (card.comeBack) status = 'comeBack';
-        else if (card.id === topCard.id) status = 'fling';
-        else if (prevStatus) status = prevStatus;
-        return { id: card.id, dragNum: i, card: nameFromImg([card], 0), status };
-      });
-      return fresh;
-    });
-  }, [btns.left, btns.right]);
 
   const [imgHasError, setImgHasError] = useState(false);
 

@@ -5,17 +5,17 @@ import Deck from './gameSession/deck/Deck';
 import Btns from './gameSession/footer/Btns';
 import About from './about/About';
 import DebugVisual from './dev/debugVisual/DebugVisual';
-import type { CardType, DragsStatusType, DevSpeedControlType } from './types/types';
+import type { CardType, DragsStatusType, DevSpeedControlType, BtnType } from './types/types';
 
 import './App.css';
 
 function App() {
-  const [btns, btnsSet] = useState<{ left: boolean; right: boolean; back: boolean; flip: boolean }>({
-    left: false,
-    right: false,
-    back: false,
-    flip: false,
-  });
+  const btnHndlr = (action: BtnType): void => {
+    deckBtnHndlrRef.current?.(action);
+  };
+
+  const deckBtnHndlrRef = useRef<((action: BtnType) => void) | null>(null);
+
   const [devDeckRest, devDeckRestSet] = useState<number>(0);
   const [devDragsStatus, setDevDragsStatus] = useState<DragsStatusType[]>([]);
   const [devDeckVisible, devDeckVisibleSet] = useState<CardType[]>([]);
@@ -29,8 +29,9 @@ function App() {
         </section>
         <section className='flexChildren2'>
           <Deck
-            btns={btns}
-            btnsSet={btnsSet}
+            setBtnHndlr={(hndlr) => {
+              deckBtnHndlrRef.current = hndlr;
+            }}
             devDeckRestSet={devDeckRestSet}
             devDeckVisibleSet={devDeckVisibleSet}
             setDevDragsStatus={setDevDragsStatus}
@@ -38,7 +39,7 @@ function App() {
           />
         </section>
         <section className='flexChildren3'>
-          <Btns btns={btns} btnsSet={btnsSet} />
+          <Btns btnHndlr={btnHndlr} />
         </section>
       </section>
 

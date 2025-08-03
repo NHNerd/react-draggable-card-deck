@@ -63,7 +63,7 @@ const Draggable = ({
   const xyMove = useRef<XYType>({ x: 0, y: 0 });
   const xyPrev = useRef<XYType>({ x: 0, y: 0 });
 
-  const [xy, setXy] = useState<XYType>(card.comeBack ? card.lastPos : { x: 0, y: 0 });
+  const [xy, setXy] = useState<XYType>(card.lastPos ? card.lastPos : { x: 0, y: 0 });
   const xyRef = useRef(xy);
 
   const dragHistory = React.useRef<{ pos: XYType; time: number }[]>([]);
@@ -142,7 +142,7 @@ const Draggable = ({
           if (
             Math.abs(xyRef.current.x) > window.innerWidth * 0.5 - window.innerWidth * 0.1 &&
             !card?.btnLR &&
-            !card?.comeBack
+            !card?.lastPos
           ) {
             if (isCardOut) {
               if (outFlag.current) return;
@@ -177,7 +177,7 @@ const Draggable = ({
                 const fresh = [...prev];
                 for (let i = 0; i < fresh.length; i++) {
                   if (fresh[i].id === card.id) {
-                    delete fresh[i]?.comeBack;
+                    delete fresh[i]?.lastPos;
                     delete fresh[i]?.btnLR;
                   }
                 }
@@ -208,7 +208,7 @@ const Draggable = ({
                 const fresh = [...prev];
                 for (let i = 0; i < fresh.length; i++) {
                   if (fresh[i].id === card.id) {
-                    delete fresh[i]?.comeBack;
+                    delete fresh[i]?.lastPos;
                     delete fresh[i]?.btnLR;
                   }
                 }
@@ -225,7 +225,7 @@ const Draggable = ({
               return { x: prev.x * speed, y: prev.y * speed };
             });
 
-            if (comeBackFlag.current && !card?.comeBack) {
+            if (comeBackFlag.current && !card?.lastPos) {
               //? DEV
               devChangeStatus(setDevDragsStatus, card, 'backToDeck', dragCountRef);
 
@@ -289,7 +289,6 @@ const Draggable = ({
 
       delete deckRef.current[cardIndex]?.btnLR;
       delete deckRef.current[cardIndex]?.lastPos;
-      delete deckRef.current[cardIndex]?.comeBack;
 
       const pickedToTop = () => {
         const deck = deckRef.current;

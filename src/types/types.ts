@@ -6,11 +6,10 @@ export type CardType = {
   random?: number;
   btnLR?: 'l' | 'r';
   lastPos?: XYType;
-  comeBack?: boolean;
 };
 export type CardHistoryType = CardType & { lastPos: XYType };
 
-export type BtnType = { left: boolean; right: boolean; back: boolean; flip: boolean };
+export type BtnType = 'left' | 'right' | 'back' | 'flip';
 
 export type DragsStatusStatusType = 'sleep' | 'drag' | 'fling' | 'backToDeck' | 'comeBack';
 export type DragsStatusType = {

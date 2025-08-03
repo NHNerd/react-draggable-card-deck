@@ -1,20 +1,16 @@
-import { useEffect, useRef, useState } from 'react';
-
+import type { BtnType } from '../../types/types';
 import BtnsCss from './Btns.module.css';
 
 type BtnsProps = {
-  btns: { left: boolean; right: boolean; back: boolean; flip: boolean };
-  btnsSet: React.Dispatch<React.SetStateAction<{ left: boolean; right: boolean; back: boolean; flip: boolean }>>;
+  btnHndlr: (btn: BtnType) => void;
 };
 
-function Btns({ btns, btnsSet }: BtnsProps) {
-  // setBtns({ left: false, right: false, back: false, flip: false });
-
+function Btns({ btnHndlr }: BtnsProps) {
   return (
     <section className={BtnsCss.footer}>
       <button
         onClick={() => {
-          btnsSet({ left: true, right: false, back: false, flip: false });
+          btnHndlr('left');
         }}
         className={BtnsCss.left}
       >
@@ -22,7 +18,7 @@ function Btns({ btns, btnsSet }: BtnsProps) {
       </button>
       <button
         onClick={() => {
-          btnsSet({ left: false, right: true, back: false, flip: false });
+          btnHndlr('right');
         }}
         className={BtnsCss.right}
       >
@@ -30,7 +26,7 @@ function Btns({ btns, btnsSet }: BtnsProps) {
       </button>
       <button
         onClick={() => {
-          btnsSet({ left: false, right: false, back: true, flip: false });
+          btnHndlr('back');
         }}
         className={BtnsCss.back}
       >
@@ -38,7 +34,7 @@ function Btns({ btns, btnsSet }: BtnsProps) {
       </button>
       <button
         onClick={() => {
-          btnsSet({ left: false, right: false, back: false, flip: true });
+          btnHndlr('flip');
         }}
         className={BtnsCss.flip}
       >

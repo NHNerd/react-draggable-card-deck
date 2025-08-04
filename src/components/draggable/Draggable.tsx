@@ -203,6 +203,8 @@ const Draggable = ({
 
             // Clearing cards props for the back btn comes active
             if (Math.abs(xyRef.current.x) < window.innerWidth * 0.2 && !comeBackToComeToDeckFlag.current) {
+              //TODO НАДО убрать из deck lastPos и btnLR, а сделать их для каждой карты свой
+              //TODO лишние ререндера из-за этого
               comeBackToComeToDeckFlag.current = true;
               setDeck((prev) => {
                 const fresh = [...prev];
@@ -276,6 +278,7 @@ const Draggable = ({
     cardWidth.current = rect.width;
 
     const hndlrStart = (e: PointerEvent) => {
+      // console.log('🍏start');
       e.preventDefault();
       if (isDraggingRef.current) return;
       //TODO     //TODO     //TODO     //TODO     //TODO     //TODO     //TODO     //TODO
@@ -302,6 +305,7 @@ const Draggable = ({
         }
 
         if (index === -1) return;
+        else if (index === topIndex) return; // already top
 
         const thisCard = deck[index];
         const newDeck = [...deck.slice(0, index), ...deck.slice(index + 1), thisCard];
@@ -310,8 +314,6 @@ const Draggable = ({
         setDeck(newDeck);
       };
       pickedToTop();
-
-      // setDeck(deckRef.current);
 
       comeBackToComeToDeckFlag.current = false;
 
@@ -329,7 +331,6 @@ const Draggable = ({
       dragHistory.current = [{ pos: { x: e.clientX, y: e.clientY }, time: performance.now() }];
 
       dragCountUpdate(draggedId, dragCountLimit, dragCountRef, setDragCount);
-      // console.log('🍏start');
 
       // dev
       //TODO DEV
@@ -337,6 +338,7 @@ const Draggable = ({
     };
 
     const hndlrMove = (e: PointerEvent) => {
+      // console.log('🍇move');
       e.preventDefault();
       if (e.pointerId !== pointerIdRef.current) return;
 
@@ -349,11 +351,10 @@ const Draggable = ({
       dragHistory.current.push({ pos: { x: e.clientX, y: e.clientY }, time: performance.now() });
       // seve last 5 frames
       if (dragHistory.current.length > 5) dragHistory.current = dragHistory.current.slice(-5);
-
-      // console.log('🍇move');
     };
 
     const hndlrEnd = (e: PointerEvent) => {
+      // console.log('🍅end');
       e.preventDefault();
       if (e.pointerId !== pointerIdRef.current) return;
       if (!isDraggingRef.current) return;
@@ -364,8 +365,7 @@ const Draggable = ({
 
       xyPrev.current = { ...xyRef.current };
 
-      // console.log('🍅end');
-      //Clear
+      // Clear
       xyMove.current = { x: 0, y: 0 };
       pointerIdRef.current = null;
 

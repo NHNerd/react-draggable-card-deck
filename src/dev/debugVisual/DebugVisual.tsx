@@ -1,6 +1,7 @@
-import React, { useState, useRef, useEffect, type JSX, Fragment } from 'react';
+import React, { useState, Fragment } from 'react';
 import { nameFromImg } from './features';
 import type { CardType, DragsStatusType, DevSpeedControlType } from '../../types/types';
+import OptionsMemo from './components/options/Options';
 import DebugVisualCss from './DebugVisual.module.css';
 
 type DebugVisualProps = {
@@ -9,68 +10,22 @@ type DebugVisualProps = {
   devSpeed: React.RefObject<DevSpeedControlType>;
 };
 
-function DebugVisual({ devDragsStatus, devDeckVisible, devSpeed }: DebugVisualProps) {
+const DebugVisual = ({ devDragsStatus, devDeckVisible, devSpeed }: DebugVisualProps) => {
   const [isShow, setIsShow] = useState<boolean>(true);
   const [containerRowsStyle, setContainerRowsStyle] = useState<{ scale: string; opacity: number }>({
     scale: '1',
     opacity: 1,
   });
 
-  type DevSpeedHndlrType = (devSpeed: React.RefObject<DevSpeedControlType>, select: DevSpeedControlType) => void;
-  const devSpeedHndlr: DevSpeedHndlrType = (devSpeed, select) => {
-    devSpeed.current = select;
-  };
-
-  const selectJSX = (label: string, name: string, opts: string[], devSpeedHndlr: DevSpeedHndlrType) => {
-    return (
-      <div>
-        <label htmlFor={name} className={DebugVisualCss.selectLabel}>
-          {label}:
-        </label>
-        <select
-          onChange={(e) => devSpeedHndlr(devSpeed, e.target.value as DevSpeedControlType)}
-          id={name}
-          className={DebugVisualCss.select}
-          name={name}
-        >
-          {opts.map((opt, i) => {
-            return (
-              <option key={opt + i} value={opt}>
-                {opt}
-              </option>
-            );
-          })}
-        </select>
-      </div>
-    );
-  };
-
   return (
     <section className={DebugVisualCss.container}>
-      <div className={DebugVisualCss.optionsWrap}>
-        <div className={DebugVisualCss.debugInfoWrap}>
-          <input
-            onChange={(e) => {
-              setIsShow(!isShow);
-              setContainerRowsStyle(isShow ? { scale: '1 0.02', opacity: 0 } : { scale: '1', opacity: 1 });
-            }}
-            className={DebugVisualCss.checkBox}
-            type='checkbox'
-            id='vehicle1'
-            name='vehicle1'
-            defaultChecked={true}
-          />
-          <label htmlFor='vehicle1'>Debug info</label>
-        </div>
-
-        <div>⨯</div>
-
-        {selectJSX('Deck', 'deck', ['poker 52', 'Anime 10', 'nums 9999'], devSpeedHndlr)}
-
-        <div>⨯</div>
-
-        {selectJSX('Cards Speed', 'devSpeed', ['normal', 'slow', 'very-slow'], devSpeedHndlr)}
-      </div>
+      <OptionsMemo
+        isShow={isShow}
+        setIsShow={setIsShow}
+        setContainerRowsStyle={setContainerRowsStyle}
+        DebugVisualCss={DebugVisualCss}
+        devSpeed={devSpeed}
+      />
 
       <div className={DebugVisualCss.containerRows} style={containerRowsStyle}>
         <div className={DebugVisualCss.textFlexRow}>
@@ -126,6 +81,6 @@ function DebugVisual({ devDragsStatus, devDeckVisible, devSpeed }: DebugVisualPr
       </div>
     </section>
   );
-}
+};
 
 export default DebugVisual;

@@ -1,3 +1,5 @@
+import React, { memo } from 'react';
+
 import type { BtnType } from '../../types/types';
 import BtnsCss from './Btns.module.css';
 
@@ -5,7 +7,7 @@ type BtnsProps = {
   btnHndlr: (btn: BtnType) => void;
 };
 
-function Btns({ btnHndlr }: BtnsProps) {
+const BtnsMemo = memo(({ btnHndlr }: BtnsProps) => {
   return (
     <section className={BtnsCss.footer}>
       <button
@@ -42,6 +44,6 @@ function Btns({ btnHndlr }: BtnsProps) {
       </button>
     </section>
   );
-}
+});
 
-export default Btns;
+export default BtnsMemo;

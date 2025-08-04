@@ -13,6 +13,7 @@ import gameDeck from '../../features/gameDeck';
 import { nameFromImg, devChangeStatus } from '../../dev/debugVisual/features';
 import { dragCountUpdate } from '../../components/draggable/features/actions';
 import type { BtnType } from '../../types/types';
+import { closureCounter } from '../../dev/features/features';
 
 type DeckProps = {
   setBtnHndlr: (handler: (btn: BtnType) => void) => void;
@@ -36,25 +37,21 @@ const Deck = ({ setBtnHndlr, devDeckRestSet, devDeckVisibleSet, setDevDragsStatu
 
   const draggedId = useRef<Set<number>>(new Set([]));
 
-  // Удаление карточки:
-  //* I. Clear
-  // 0. Add field lastPos
-  // 1. Remove field btnLR;
-  // 2. draggedId
-  // 3. flingSpeed
-  //* II. Set
-  // 0. Remove card from deck
-  // 1. Add to deckHistory
-  const closure = () => {
-    let result = 0;
-    return (n: number = 1) => (result += n);
-  };
-  const counter1Ref: React.RefObject<(n?: number) => number> = useRef(closure());
-  const counter2Ref: React.RefObject<(n?: number) => number> = useRef(closure());
-  const counter3Ref: React.RefObject<(n?: number) => number> = useRef(closure());
+  const counter1Ref: React.RefObject<(n?: number) => number> = useRef(closureCounter());
+  const counter2Ref: React.RefObject<(n?: number) => number> = useRef(closureCounter());
+  const counter3Ref: React.RefObject<(n?: number) => number> = useRef(closureCounter());
 
-  // console.log('🍒', counter2Ref.current(), 'Deck Re-Render');
   const cardOutHndlr = (cardId: number, direction: 'string', lastPos: XYType, codePoint: string) => {
+    // Удаление карточки:
+    //* I. Clear
+    // 0. Add field lastPos
+    // 1. Remove field btnLR;
+    // 2. draggedId
+    // 3. flingSpeed
+    //* II. Set
+    // 0. Remove card from deck
+    // 1. Add to deckHistory
+
     // console.log(
     //   `⭕${counter1Ref.current()}`,
     //   cardId,
@@ -212,10 +209,10 @@ const Deck = ({ setBtnHndlr, devDeckRestSet, devDeckVisibleSet, setDevDragsStatu
 
     // Dev
     devDeckRestSet(deck.length);
-  }, [deck, dragCountLimit.current]);
+  }, [deck]);
 
   const [imgHasError, setImgHasError] = useState(false);
-
+  console.log('♣️ReRender', counter3Ref.current());
   return (
     <div className={DeckCss.deck}>
       {deckVisible.map((card, i) => {

@@ -1,8 +1,8 @@
 import React, { useRef, useState } from 'react';
 
-import Bar from './gameSession/bar/Bar';
+import BarMemo from './gameSession/bar/Bar';
 import Deck from './gameSession/deck/Deck';
-import Btns from './gameSession/footer/Btns';
+import BtnsMemo from './gameSession/footer/Btns';
 import About from './about/About';
 import DebugVisual from './dev/debugVisual/DebugVisual';
 import type { CardType, DragsStatusType, DevSpeedControlType, BtnType } from './types/types';
@@ -25,7 +25,7 @@ function App() {
     <>
       <section className='gameContainer'>
         <section className='flexChildren1'>
-          <Bar devDeckRest={devDeckRest} />
+          <BarMemo devDeckRest={devDeckRest} />
         </section>
         <section className='flexChildren2'>
           <Deck
@@ -39,7 +39,7 @@ function App() {
           />
         </section>
         <section className='flexChildren3'>
-          <Btns btnHndlr={btnHndlr} />
+          <BtnsMemo btnHndlr={btnHndlr} />
         </section>
       </section>
 

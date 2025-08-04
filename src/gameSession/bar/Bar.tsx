@@ -1,4 +1,4 @@
-import { useRef } from 'react';
+import { useRef, memo } from 'react';
 
 import BarCss from './Bar.module.css';
 
@@ -15,7 +15,7 @@ type BarProps = {
   devDeckRest: number;
 };
 
-const Bar = ({ devDeckRest }: BarProps) => {
+const BarMemo = memo(({ devDeckRest }: BarProps) => {
   const maxClosure = useRef(createMaxClosure());
 
   return (
@@ -33,6 +33,6 @@ const Bar = ({ devDeckRest }: BarProps) => {
       </div>
     </section>
   );
-};
+});
 
-export default Bar;
+export default BarMemo;
